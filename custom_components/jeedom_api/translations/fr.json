@@ -1,0 +1,45 @@
+{
+  "title": "Jeedom API Prototype",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connexion à Jeedom",
+        "description": "Saisissez l’URL locale et la clé API Jeedom.",
+        "data": {
+          "url": "URL Jeedom",
+          "api_key": "Clé API"
+        }
+      },
+      "select": {
+        "title": "Équipements à importer",
+        "description": "Sélectionnez uniquement les équipements essentiels. Ce choix pourra être modifié ultérieurement.",
+        "data": {
+          "selected_equipment": "Équipements"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Connexion impossible à Jeedom.",
+      "invalid_auth": "Clé API invalide.",
+      "unknown": "Erreur inattendue."
+    },
+    "abort": {
+      "already_configured": "Cette instance Jeedom est déjà configurée."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options Jeedom",
+        "description": "Modifiez les équipements importés et la fréquence de rafraîchissement.",
+        "data": {
+          "selected_equipment": "Équipements",
+          "scan_interval": "Intervalle de rafraîchissement"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossible d’actualiser la liste depuis Jeedom."
+    }
+  }
+}
