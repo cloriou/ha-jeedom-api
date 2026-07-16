@@ -2,7 +2,7 @@
 from datetime import timedelta
 
 DOMAIN = "jeedom_api"
-PLATFORMS = ["light", "sensor", "binary_sensor"]
+PLATFORMS = ["light", "switch", "cover", "button", "sensor", "binary_sensor"]
 
 CONF_API_KEY = "api_key"
 CONF_SELECTED_EQUIPMENT = "selected_equipment"

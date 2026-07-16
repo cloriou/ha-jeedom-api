@@ -13,20 +13,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import CONF_SELECTED_EQUIPMENT, DOMAIN
 from .entity import JeedomEntity
 
-LIGHT_TYPES = {
-    "LIGHT_ON",
-    "LIGHT_OFF",
-    "LIGHT_STATE",
-    "LIGHT_BRIGHTNESS",
-    "LIGHT_SLIDER",
-}
+from .discovery import is_light
 
-
-def _is_light(equipment) -> bool:
-    generic_types = {cmd.generic_type for cmd in equipment.commands}
-    return bool(generic_types & LIGHT_TYPES) and (
-        "LIGHT_ON" in generic_types or "LIGHT_OFF" in generic_types
-    )
 
 
 async def async_setup_entry(
@@ -39,7 +27,7 @@ async def async_setup_entry(
     entities = [
         JeedomLight(coordinator, equipment)
         for eq_id, equipment in coordinator.data.items()
-        if eq_id in selected and _is_light(equipment)
+        if eq_id in selected and is_light(equipment)
     ]
     async_add_entities(entities)
 

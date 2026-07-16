@@ -11,6 +11,9 @@ d'équipements Jeedom via l'API HTTP locale.
 - Sélection des équipements Jeedom à importer.
 - Modification de cette sélection dans **Configurer**.
 - Lumières marche/arrêt avec luminosité.
+- Interrupteurs marche/arrêt.
+- Volets avec ouverture, fermeture, arrêt et position.
+- Boutons pour les actions Jeedom restantes.
 - Capteurs numériques et texte.
 - Capteurs binaires.
 - Rafraîchissement groupé via `fullData`.
