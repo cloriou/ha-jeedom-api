@@ -20,6 +20,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import CONF_SELECTED_EQUIPMENT, DOMAIN
+from .blea import sensor_metadata
 from .entity import JeedomEntity
 
 GENERIC_MAP = {
@@ -80,6 +81,15 @@ class JeedomSensor(JeedomEntity, SensorEntity):
                 if not self._attr_native_unit_of_measurement:
                     self._attr_native_unit_of_measurement = default_unit
                 break
+
+        # BLEA-specific fallback and diagnostics classification.
+        metadata = sensor_metadata(equipment, command)
+        if metadata.get("device_class") is not None:
+            self._attr_device_class = metadata["device_class"]
+        if metadata.get("unit") is not None:
+            self._attr_native_unit_of_measurement = metadata["unit"]
+        if metadata.get("entity_category") is not None:
+            self._attr_entity_category = metadata["entity_category"]
 
         if command.subtype == "numeric":
             if self._attr_device_class in {

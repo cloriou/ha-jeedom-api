@@ -7,6 +7,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import CONF_SELECTED_EQUIPMENT, DOMAIN
+from .blea import binary_sensor_metadata
 from .entity import JeedomEntity
 
 GENERIC_DEVICE_CLASSES = {
@@ -65,6 +66,12 @@ class JeedomBinarySensor(JeedomEntity, BinarySensorEntity):
             if token in generic:
                 self._attr_device_class = device_class
                 break
+
+        metadata = binary_sensor_metadata(equipment, command)
+        if metadata.get("device_class") is not None:
+            self._attr_device_class = metadata["device_class"]
+        if metadata.get("entity_category") is not None:
+            self._attr_entity_category = metadata["entity_category"]
 
     @property
     def is_on(self) -> bool | None:

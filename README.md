@@ -40,6 +40,21 @@ http://jeedom-master.local
 
 Puis saisissez une clé API Jeedom valide et sélectionnez les équipements à importer.
 
+
+## Équipements BLEA
+
+Les thermomètres et hygromètres du plugin Jeedom BLEA sont reconnus spécialement.
+Pour un équipement tel que `Bureau`, Home Assistant crée notamment :
+
+- un capteur de température en °C ;
+- un capteur d'humidité en % ;
+- un capteur de batterie en % ;
+- un capteur RSSI en dBm ;
+- un ou plusieurs diagnostics de connectivité.
+
+La température et l'humidité restent les mesures principales de l'appareil.
+La batterie, le RSSI et la connectivité sont rangés dans la section diagnostics.
+
 ## Mise à jour de la sélection
 
 Dans Home Assistant :
