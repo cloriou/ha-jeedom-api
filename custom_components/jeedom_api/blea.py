@@ -5,7 +5,6 @@ from homeassistant.components.binary_sensor import BinarySensorDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.const import (
     PERCENTAGE,
-    SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     UnitOfTemperature,
 )
 from homeassistant.helpers.entity import EntityCategory
@@ -53,7 +52,7 @@ def sensor_metadata(equipment, command):
     ):
         return {
             "device_class": SensorDeviceClass.SIGNAL_STRENGTH,
-            "unit": SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+            "unit": "dBm",
             "entity_category": EntityCategory.DIAGNOSTIC,
         }
 

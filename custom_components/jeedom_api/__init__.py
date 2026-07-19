@@ -1,6 +1,8 @@
 """Jeedom API prototype integration."""
 from __future__ import annotations
 
+import logging
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
@@ -13,6 +15,8 @@ from .const import (
     PLATFORMS,
 )
 from .coordinator import JeedomDataUpdateCoordinator
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -39,4 +43,16 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def _async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    _LOGGER.info("Rechargement de Jeedom API après modification des options")
     await hass.config_entries.async_reload(entry.entry_id)
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Migrate old entries and force a clean entity rebuild."""
+    _LOGGER.info(
+        "Migration de l'entrée Jeedom API de la version %s vers la version 1",
+        entry.version,
+    )
+    if entry.version < 1:
+        hass.config_entries.async_update_entry(entry, version=1)
+    return True

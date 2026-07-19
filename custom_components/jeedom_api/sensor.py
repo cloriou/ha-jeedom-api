@@ -1,6 +1,8 @@
 """Jeedom sensor entities."""
 from __future__ import annotations
 
+import logging
+
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -23,6 +25,8 @@ from .const import CONF_SELECTED_EQUIPMENT, DOMAIN
 from .blea import sensor_metadata
 from .entity import JeedomEntity
 
+_LOGGER = logging.getLogger(__name__)
+
 GENERIC_MAP = {
     "TEMPERATURE": (SensorDeviceClass.TEMPERATURE, UnitOfTemperature.CELSIUS),
     "HUMIDITY": (SensorDeviceClass.HUMIDITY, PERCENTAGE),
@@ -36,15 +40,16 @@ GENERIC_MAP = {
 
 
 def _sensor_commands(equipment):
-    # Light state and brightness are attributes of light, not duplicate sensors.
+    """Return commands exposed as sensors, including BLEA environmental data."""
     excluded = {"LIGHT_STATE", "LIGHT_BRIGHTNESS"}
-    return [
-        cmd
-        for cmd in equipment.info_commands()
-        if cmd.subtype in {"numeric", "string"}
-        and cmd.generic_type not in excluded
-        and cmd.generic_type != "DONT"
-    ]
+    commands = []
+    for cmd in equipment.info_commands():
+        if cmd.subtype not in {"numeric", "string"}:
+            continue
+        if cmd.generic_type in excluded or cmd.generic_type == "DONT":
+            continue
+        commands.append(cmd)
+    return commands
 
 
 async def async_setup_entry(
@@ -58,10 +63,18 @@ async def async_setup_entry(
     for eq_id, equipment in coordinator.data.items():
         if eq_id not in selected:
             continue
+        commands = _sensor_commands(equipment)
+        _LOGGER.debug(
+            "Équipement Jeedom %s (%s): %s capteur(s) info détecté(s)",
+            equipment.name,
+            equipment.plugin,
+            len(commands),
+        )
         entities.extend(
             JeedomSensor(coordinator, equipment, cmd)
-            for cmd in _sensor_commands(equipment)
+            for cmd in commands
         )
+    _LOGGER.info("Ajout de %s capteur(s) Jeedom", len(entities))
     async_add_entities(entities)
 
 

@@ -81,3 +81,30 @@ demande la clé durant la configuration et aucune clé n'est incluse dans ce dé
 
 Les prochaines plateformes prévues sont `switch`, `button`, `cover`, `number`
 et `select`.
+
+## Réparer une mise à jour BLEA
+
+Après installation de la version 0.3.1 :
+
+1. Redémarrez complètement Home Assistant.
+2. Ouvrez **Paramètres → Appareils et services → Jeedom API → Configurer**.
+3. Laissez les équipements BLEA cochés puis enregistrez.
+4. Attendez le rechargement de l'intégration.
+5. Ouvrez l'appareil BLEA et vérifiez également la section **Entités désactivées**.
+
+Pour diagnostiquer :
+
+```yaml
+logger:
+  default: warning
+  logs:
+    custom_components.jeedom_api: debug
+    custom_components.jeedom_api.sensor: debug
+```
+
+Les journaux doivent contenir une ligne comme :
+
+```text
+Équipement Jeedom Bureau (blea): 6 capteur(s) info détecté(s)
+```
+
