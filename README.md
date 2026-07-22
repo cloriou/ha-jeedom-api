@@ -119,3 +119,26 @@ appareil. Vous pouvez aussi ouvrir l'appareil, utiliser le menu `⋮`, puis
 La découverte automatique surveille les nouvelles commandes Jeedom et recharge
 l'intégration lorsqu'une température, une humidité, une batterie ou une autre
 commande compatible apparaît.
+
+
+## Correctif BLEA 0.5.1
+
+La version 0.5.1 corrige un échec global de la plateforme `sensor` sur les
+versions récentes de Home Assistant. Après la mise à jour, un redémarrage complet
+est obligatoire. Il n'est normalement pas nécessaire de supprimer l'appareil :
+le chargement réussi de la plateforme crée les entités manquantes avec leurs
+identifiants uniques.
+
+Dans les journaux, cherchez :
+
+```text
+Jeedom Bureau [blea] : 4 capteur(s) numérique(s)/texte détecté(s)
+Création de ... entité(s) sensor Jeedom
+```
+
+
+## Correctif 0.5.2
+
+Cette version corrige une faute de frappe qui empêchait complètement le chargement
+de la plateforme `sensor`. Après installation, redémarrez complètement Home Assistant.
+Les entités température, humidité, batterie et RSSI doivent alors être créées.

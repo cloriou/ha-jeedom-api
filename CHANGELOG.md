@@ -1,11 +1,11 @@
 # Journal des modifications
 
-## 0.5.0
-- Suppression réelle des entités et appareils décochés.
-- Suppression individuelle depuis le menu de l'appareil.
-- Recréation propre après recochage.
-- Détection automatique des nouvelles commandes Jeedom.
-- Conservation complète des capteurs BLEA.
+## 0.5.2
 
-## 0.3.1
-- Correction BLEA.
+- Correction critique d'une faute de frappe dans `sensor.py`.
+- Remplacement de `self.__attr_device_class` par `self._attr_device_class`.
+- Restauration du chargement des capteurs température, humidité, batterie et RSSI.
+
+## 0.5.1
+
+- Réécriture du chargement des capteurs BLEA.

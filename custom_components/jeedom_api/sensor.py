@@ -2,112 +2,158 @@
 from __future__ import annotations
 
 import logging
+from numbers import Number
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    PERCENTAGE,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfEnergy,
     UnitOfPower,
     UnitOfPressure,
+    UnitOfRatio,
     UnitOfTemperature,
 )
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity import EntityCategory
 
 from .const import CONF_SELECTED_EQUIPMENT, DOMAIN
-from .blea import sensor_metadata
 from .entity import JeedomEntity
 
 _LOGGER = logging.getLogger(__name__)
 
-GENERIC_MAP = {
-    "TEMPERATURE": (SensorDeviceClass.TEMPERATURE, UnitOfTemperature.CELSIUS),
-    "HUMIDITY": (SensorDeviceClass.HUMIDITY, PERCENTAGE),
-    "POWER": (SensorDeviceClass.POWER, UnitOfPower.WATT),
-    "ENERGY": (SensorDeviceClass.ENERGY, UnitOfEnergy.KILO_WATT_HOUR),
-    "VOLTAGE": (SensorDeviceClass.VOLTAGE, UnitOfElectricPotential.VOLT),
-    "CURRENT": (SensorDeviceClass.CURRENT, UnitOfElectricCurrent.AMPERE),
-    "PRESSURE": (SensorDeviceClass.ATMOSPHERIC_PRESSURE, UnitOfPressure.HPA),
-    "BATTERY": (SensorDeviceClass.BATTERY, PERCENTAGE),
-}
+
+def _normalized(value) -> str:
+    return str(value or "").strip().lower()
 
 
 def _sensor_commands(equipment):
-    """Return commands exposed as sensors, including BLEA environmental data."""
-    excluded = {"LIGHT_STATE", "LIGHT_BRIGHTNESS"}
-    commands = []
-    for cmd in equipment.info_commands():
-        if cmd.subtype not in {"numeric", "string"}:
-            continue
-        if cmd.generic_type in excluded or cmd.generic_type == "DONT":
-            continue
-        commands.append(cmd)
-    return commands
+    """Return Jeedom info commands that can safely become sensors."""
+    excluded = {"LIGHT_STATE", "LIGHT_BRIGHTNESS", "DONT"}
+    return [
+        command
+        for command in equipment.info_commands()
+        if command.subtype in {"numeric", "string"}
+        and command.generic_type not in excluded
+    ]
 
 
-async def async_setup_entry(
-    hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
-) -> None:
+def _metadata(equipment, command) -> dict:
+    """Map Jeedom metadata to modern Home Assistant metadata."""
+    generic = _normalized(command.generic_type).upper()
+    logical = _normalized(command.logical_id)
+    name = _normalized(command.name)
+    unit = _normalized(command.unit)
+    plugin = _normalized(equipment.plugin)
+
+    result: dict = {}
+
+    if generic == "TEMPERATURE" or logical == "temperature" or "température" in name:
+        result["device_class"] = SensorDeviceClass.TEMPERATURE
+        result["unit"] = UnitOfTemperature.CELSIUS
+
+    elif generic == "HUMIDITY" or logical in {"humidity", "moisture"} or "humidité" in name:
+        result["device_class"] = SensorDeviceClass.HUMIDITY
+        result["unit"] = UnitOfRatio.PERCENTAGE
+
+    elif generic == "BATTERY" or logical == "battery" or "batterie" in name:
+        result["device_class"] = SensorDeviceClass.BATTERY
+        result["unit"] = UnitOfRatio.PERCENTAGE
+        result["entity_category"] = EntityCategory.DIAGNOSTIC
+
+    elif generic == "POWER":
+        result["device_class"] = SensorDeviceClass.POWER
+        result["unit"] = UnitOfPower.WATT
+
+    elif generic == "ENERGY":
+        result["device_class"] = SensorDeviceClass.ENERGY
+        result["unit"] = UnitOfEnergy.KILO_WATT_HOUR
+
+    elif generic == "VOLTAGE":
+        result["device_class"] = SensorDeviceClass.VOLTAGE
+        result["unit"] = UnitOfElectricPotential.VOLT
+
+    elif generic == "CURRENT":
+        result["device_class"] = SensorDeviceClass.CURRENT
+        result["unit"] = UnitOfElectricCurrent.AMPERE
+
+    elif generic in {"PRESSURE", "ATMOSPHERIC_PRESSURE"}:
+        result["device_class"] = SensorDeviceClass.ATMOSPHERIC_PRESSURE
+        result["unit"] = UnitOfPressure.HPA
+
+    elif "rssi" in logical or "rssi" in name or unit == "dbm":
+        result["device_class"] = SensorDeviceClass.SIGNAL_STRENGTH
+        result["unit"] = "dBm"
+        result["entity_category"] = EntityCategory.DIAGNOSTIC
+
+    # BLEA fallback based on common command IDs/names.
+    if plugin == "blea" and not result:
+        if logical == "temperature":
+            result["device_class"] = SensorDeviceClass.TEMPERATURE
+            result["unit"] = UnitOfTemperature.CELSIUS
+        elif logical in {"humidity", "moisture"}:
+            result["device_class"] = SensorDeviceClass.HUMIDITY
+            result["unit"] = UnitOfRatio.PERCENTAGE
+        elif logical == "battery":
+            result["device_class"] = SensorDeviceClass.BATTERY
+            result["unit"] = UnitOfRatio.PERCENTAGE
+            result["entity_category"] = EntityCategory.DIAGNOSTIC
+
+    return result
+
+
+async def async_setup_entry(hass, entry, async_add_entities):
+    """Set up selected Jeedom sensors."""
     coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     selected = set(entry.options.get(CONF_SELECTED_EQUIPMENT, []))
     entities = []
-    for eq_id, equipment in coordinator.data.items():
-        if eq_id not in selected:
+
+    for equipment_id, equipment in coordinator.data.items():
+        if equipment_id not in selected:
             continue
+
         commands = _sensor_commands(equipment)
-        _LOGGER.debug(
-            "Équipement Jeedom %s (%s): %s capteur(s) info détecté(s)",
+        _LOGGER.info(
+            "Jeedom %s [%s] : %s capteur(s) numérique(s)/texte détecté(s)",
             equipment.name,
             equipment.plugin,
             len(commands),
         )
         entities.extend(
-            JeedomSensor(coordinator, equipment, cmd)
-            for cmd in commands
+            JeedomSensor(coordinator, equipment, command)
+            for command in commands
         )
-    _LOGGER.info("Ajout de %s capteur(s) Jeedom", len(entities))
+
+    _LOGGER.info("Création de %s entité(s) sensor Jeedom", len(entities))
     async_add_entities(entities)
 
 
 class JeedomSensor(JeedomEntity, SensorEntity):
-    """One Jeedom info command exposed as a sensor."""
+    """One Jeedom info command exposed as a Home Assistant sensor."""
 
     def __init__(self, coordinator, equipment, command) -> None:
-        super().__init__(coordinator, equipment, unique_suffix=f"sensor_{command.id}")
+        super().__init__(
+            coordinator,
+            equipment,
+            unique_suffix=f"sensor_{command.id}",
+        )
         self.command_id = command.id
+        self.command_subtype = command.subtype
         self._attr_name = command.name
-        self._attr_native_unit_of_measurement = command.unit
 
-        generic = command.generic_type or ""
-        for token, (device_class, default_unit) in GENERIC_MAP.items():
-            if token in generic:
-                self._attr_device_class = device_class
-                if not self._attr_native_unit_of_measurement:
-                    self._attr_native_unit_of_measurement = default_unit
-                break
+        metadata = _metadata(equipment, command)
+        self._attr_device_class = metadata.get("device_class")
+        self._attr_native_unit_of_measurement = (
+            metadata.get("unit") or command.unit or None
+        )
+        self._attr_entity_category = metadata.get("entity_category")
 
-        # BLEA-specific fallback and diagnostics classification.
-        metadata = sensor_metadata(equipment, command)
-        if metadata.get("device_class") is not None:
-            self._attr_device_class = metadata["device_class"]
-        if metadata.get("unit") is not None:
-            self._attr_native_unit_of_measurement = metadata["unit"]
-        if metadata.get("entity_category") is not None:
-            self._attr_entity_category = metadata["entity_category"]
-
+        # Only numeric sensors may have a measurement state class.
         if command.subtype == "numeric":
-            if self._attr_device_class in {
-                SensorDeviceClass.ENERGY,
-            }:
+            if self._attr_device_class == SensorDeviceClass.ENERGY:
                 self._attr_state_class = SensorStateClass.TOTAL_INCREASING
             else:
                 self._attr_state_class = SensorStateClass.MEASUREMENT
@@ -115,9 +161,39 @@ class JeedomSensor(JeedomEntity, SensorEntity):
     @property
     def native_value(self):
         equipment = self.equipment
-        if not equipment:
+        if equipment is None:
             return None
+
         command = next(
-            (cmd for cmd in equipment.commands if cmd.id == self.command_id), None
+            (
+                item
+                for item in equipment.commands
+                if item.id == self.command_id
+            ),
+            None,
         )
-        return command.state if command else None
+        if command is None:
+            return None
+
+        value = command.state
+        if self.command_subtype != "numeric":
+            return value
+
+        if value in (None, ""):
+            return None
+
+        # Preserve numeric values as numbers instead of strings.
+        if isinstance(value, Number):
+            return value
+
+        try:
+            number = float(str(value).replace(",", "."))
+            return int(number) if number.is_integer() else number
+        except (TypeError, ValueError):
+            _LOGGER.warning(
+                "Valeur non numérique pour %s/%s : %r",
+                equipment.name,
+                command.name,
+                value,
+            )
+            return None
