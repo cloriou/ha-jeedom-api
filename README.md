@@ -108,3 +108,14 @@ Les journaux doivent contenir une ligne comme :
 Équipement Jeedom Bureau (blea): 6 capteur(s) info détecté(s)
 ```
 
+
+
+## Version 0.5.0
+
+Décochez un équipement dans **Configurer** pour supprimer ses entités et son
+appareil. Vous pouvez aussi ouvrir l'appareil, utiliser le menu `⋮`, puis
+**Supprimer**. Recocher l'équipement recrée toutes les entités disponibles.
+
+La découverte automatique surveille les nouvelles commandes Jeedom et recharge
+l'intégration lorsqu'une température, une humidité, une batterie ou une autre
+commande compatible apparaît.

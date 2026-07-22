@@ -34,7 +34,8 @@
         "description": "Modifiez les équipements importés et la fréquence de rafraîchissement.",
         "data": {
           "selected_equipment": "Équipements",
-          "scan_interval": "Intervalle de rafraîchissement"
+          "scan_interval": "Intervalle de rafraîchissement",
+          "auto_discover_new_commands": "Détecter automatiquement les nouvelles commandes"
         }
       }
     },

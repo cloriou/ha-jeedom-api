@@ -15,7 +15,7 @@ _LOGGER = logging.getLogger(__name__)
 class JeedomDataUpdateCoordinator(DataUpdateCoordinator):
     """Fetch all data once and share it between entities."""
 
-    def __init__(self, hass, api: JeedomApi, scan_interval: int) -> None:
+    def __init__(self, hass, api: JeedomApi, scan_interval: int, entry=None) -> None:
         super().__init__(
             hass,
             _LOGGER,
@@ -23,6 +23,9 @@ class JeedomDataUpdateCoordinator(DataUpdateCoordinator):
             update_interval=timedelta(seconds=scan_interval),
         )
         self.api = api
+        self.entry = entry
+        self.topology_signature = None
+        self.reload_scheduled = False
 
     async def _async_update_data(self):
         try:

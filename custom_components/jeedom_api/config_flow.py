@@ -13,9 +13,11 @@ from homeassistant.helpers import config_validation as cv, selector
 from .api import JeedomApi, JeedomApiError, JeedomAuthenticationError
 from .const import (
     CONF_API_KEY,
+    CONF_AUTO_DISCOVER,
     CONF_SCAN_INTERVAL,
     CONF_SELECTED_EQUIPMENT,
     DEFAULT_SCAN_INTERVAL,
+    DEFAULT_AUTO_DISCOVER,
     DOMAIN,
     MAX_SCAN_INTERVAL,
     MIN_SCAN_INTERVAL,
@@ -75,6 +77,7 @@ class JeedomApiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 options={
                     CONF_SELECTED_EQUIPMENT: user_input[CONF_SELECTED_EQUIPMENT],
                     CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
+                    CONF_AUTO_DISCOVER: DEFAULT_AUTO_DISCOVER,
                 },
             )
 
@@ -125,6 +128,12 @@ class JeedomOptionsFlow(config_entries.OptionsFlow):
             {
                 vol.Required(CONF_SELECTED_EQUIPMENT, default=current):
                     cv.multi_select(choices),
+                vol.Required(
+                    CONF_AUTO_DISCOVER,
+                    default=self.config_entry.options.get(
+                        CONF_AUTO_DISCOVER, DEFAULT_AUTO_DISCOVER
+                    ),
+                ): bool,
                 vol.Required(
                     CONF_SCAN_INTERVAL,
                     default=self.config_entry.options.get(
