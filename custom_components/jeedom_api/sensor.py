@@ -24,6 +24,7 @@ from .const import CONF_SELECTED_EQUIPMENT, DOMAIN
 from .entity import JeedomEntity
 
 _LOGGER = logging.getLogger(__name__)
+INTEGRATION_SENSOR_VERSION = "0.5.3"
 
 
 def _normalized(value) -> str:
@@ -107,6 +108,7 @@ def _metadata(equipment, command) -> dict:
 
 async def async_setup_entry(hass, entry, async_add_entities):
     """Set up selected Jeedom sensors."""
+    _LOGGER.warning("Chargement de jeedom_api.sensor version %s", INTEGRATION_SENSOR_VERSION)
     coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     selected = set(entry.options.get(CONF_SELECTED_EQUIPMENT, []))
     entities = []
@@ -134,6 +136,11 @@ async def async_setup_entry(hass, entry, async_add_entities):
 class JeedomSensor(JeedomEntity, SensorEntity):
     """One Jeedom info command exposed as a Home Assistant sensor."""
 
+    _attr_device_class = None
+    _attr_native_unit_of_measurement = None
+    _attr_entity_category = None
+    _attr_state_class = None
+
     def __init__(self, coordinator, equipment, command) -> None:
         super().__init__(
             coordinator,
@@ -145,7 +152,8 @@ class JeedomSensor(JeedomEntity, SensorEntity):
         self._attr_name = command.name
 
         metadata = _metadata(equipment, command)
-        self._attr_device_class = metadata.get("device_class")
+        device_class = metadata.get("device_class")
+        self._attr_device_class = device_class
         self._attr_native_unit_of_measurement = (
             metadata.get("unit") or command.unit or None
         )
@@ -153,7 +161,7 @@ class JeedomSensor(JeedomEntity, SensorEntity):
 
         # Only numeric sensors may have a measurement state class.
         if command.subtype == "numeric":
-            if self._attr_device_class == SensorDeviceClass.ENERGY:
+            if device_class == SensorDeviceClass.ENERGY:
                 self._attr_state_class = SensorStateClass.TOTAL_INCREASING
             else:
                 self._attr_state_class = SensorStateClass.MEASUREMENT

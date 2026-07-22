@@ -142,3 +142,18 @@ Création de ... entité(s) sensor Jeedom
 Cette version corrige une faute de frappe qui empêchait complètement le chargement
 de la plateforme `sensor`. Après installation, redémarrez complètement Home Assistant.
 Les entités température, humidité, batterie et RSSI doivent alors être créées.
+
+
+## Vérification de la version 0.5.3
+
+Après redémarrage, les journaux doivent contenir exactement :
+
+```text
+Chargement de Jeedom API version 0.5.3
+Chargement de jeedom_api.sensor version 0.5.3
+```
+
+Si ces lignes n'apparaissent pas, Home Assistant charge encore une ancienne copie
+du composant. Il faut alors supprimer complètement le dossier
+`/config/custom_components/jeedom_api`, redémarrer, réinstaller via HACS, puis
+redémarrer une seconde fois.

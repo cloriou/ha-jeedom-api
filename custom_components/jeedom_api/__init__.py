@@ -21,9 +21,11 @@ from .registry import async_remove_device, async_sync_registries
 from .topology import topology_signature
 
 _LOGGER = logging.getLogger(__name__)
+INTEGRATION_VERSION = "0.5.3"
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    _LOGGER.warning("Chargement de Jeedom API version %s", INTEGRATION_VERSION)
     api = JeedomApi(hass, entry.data["url"], entry.data[CONF_API_KEY])
     scan_interval = int(entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL))
     coordinator = JeedomDataUpdateCoordinator(hass, api, scan_interval, entry)
